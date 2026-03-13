@@ -1,27 +1,49 @@
 import { NextResponse } from 'next/server'
 
 export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-// Function to fetch WordPress posts for sitemap
-async function getWordPressPosts() {
-  try {
-    const response = await fetch('https://blog.iptvzones.com/wp-json/wp/v2/posts?per_page=100', {
-      next: { revalidate: 86400 } // Revalidate daily
-    })
+// Function to fetch ALL WordPress posts (handles pagination)
+async function getAllWordPressPosts() {
+  const allPosts: any[] = []
+  let page = 1
+  let hasMore = true
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch posts')
+  while (hasMore) {
+    try {
+      const response = await fetch(
+        `https://blog.iptvzones.com/wp-json/wp/v2/posts?per_page=100&page=${page}&_fields=id,slug,modified`,
+        { cache: 'no-store' }
+      )
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          hasMore = false
+          break
+        }
+        throw new Error('Failed to fetch posts')
+      }
+
+      const posts = await response.json()
+      if (posts.length === 0) {
+        hasMore = false
+      } else {
+        allPosts.push(...posts)
+        const totalPages = parseInt(response.headers.get('X-WP-TotalPages') || '1')
+        hasMore = page < totalPages
+        page++
+      }
+    } catch (error) {
+      console.error('Error fetching WordPress posts for sitemap:', error)
+      hasMore = false
     }
-
-    return await response.json()
-  } catch (error) {
-    console.error('Error fetching WordPress posts for sitemap:', error)
-    return []
   }
+
+  return allPosts
 }
 
 export async function GET() {
-  const posts = await getWordPressPosts()
+  const posts = await getAllWordPressPosts()
 
   const postEntries = posts.length > 0
     ? posts.map((post: any) => `  <url>
