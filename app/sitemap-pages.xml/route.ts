@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server'
 
+export const revalidate = 0
+
 export async function GET() {
   const staticPages = [
-    'https://iptvzones.com',
-    'https://iptvzones.com/about',
-    'https://iptvzones.com/blog',
-    'https://iptvzones.com/pricing',
-    'https://iptvzones.com/contact',
-    'https://iptvzones.com/contacts',
-    'https://iptvzones.com/en',
-    'https://iptvzones.com/product/1-month',
-    'https://iptvzones.com/product-category/iptv-subscription/page/3',
+    { url: 'https://iptvzones.com', changefreq: 'daily', priority: '1.0' },
+    { url: 'https://iptvzones.com/about', changefreq: 'weekly', priority: '0.8' },
+    { url: 'https://iptvzones.com/blog', changefreq: 'daily', priority: '0.9' },
+    { url: 'https://iptvzones.com/pricing', changefreq: 'weekly', priority: '0.95' },
+    { url: 'https://iptvzones.com/contact', changefreq: 'weekly', priority: '0.85' },
+    { url: 'https://iptvzones.com/en', changefreq: 'weekly', priority: '0.7' },
+    { url: 'https://iptvzones.com/product/1-month', changefreq: 'weekly', priority: '0.8' },
+    { url: 'https://iptvzones.com/product-category/iptv-subscription/page/3', changefreq: 'weekly', priority: '0.6' },
   ]
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  ${staticPages.map(url => `
-  <url>
-    <loc>${url}</loc>
+${staticPages.map(page => `  <url>
+    <loc>${page.url}</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
-    <changefreq>${url === 'https://iptvzones.com' ? 'daily' : 'weekly'}</changefreq>
-    <priority>${url === 'https://iptvzones.com' ? '1.0' : '0.8'}</priority>
-  </url>`).join('')}
+    <changefreq>${page.changefreq}</changefreq>
+    <priority>${page.priority}</priority>
+  </url>`).join('\n')}
 </urlset>`
 
   return new NextResponse(sitemap, {

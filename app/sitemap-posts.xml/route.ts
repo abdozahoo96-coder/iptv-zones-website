@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const revalidate = 0
+
 // Function to fetch WordPress posts for sitemap
 async function getWordPressPosts() {
   try {
@@ -21,18 +23,14 @@ async function getWordPressPosts() {
 export async function GET() {
   const posts = await getWordPressPosts()
 
-  // Generate sitemap even if no posts (empty is valid)
   const postEntries = posts.length > 0
-    ? posts.map((post: any) => `
-  <url>
+    ? posts.map((post: any) => `  <url>
     <loc>https://iptvzones.com/blog/${post.slug}</loc>
     <lastmod>${new Date(post.modified).toISOString()}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
-  </url>`).join('')
-    : `
-  <!-- No blog posts available from WordPress API -->
-  <url>
+  </url>`).join('\n')
+    : `  <url>
     <loc>https://iptvzones.com/blog</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
     <changefreq>daily</changefreq>
@@ -40,7 +38,8 @@ export async function GET() {
   </url>`
 
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${postEntries}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${postEntries}
 </urlset>`
 
   return new NextResponse(sitemap, {
